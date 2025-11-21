@@ -179,7 +179,7 @@ mod set {
     }
 
     #[test]
-    fn blob_replace_with_differnent_size() {
+    fn blob_replace_with_different_size() {
         let mut flash = common::Flash::new(4);
         let mut nvs = esp_nvs::Nvs::new(0, flash.len(), &mut flash).unwrap();
 
