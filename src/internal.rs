@@ -73,6 +73,7 @@ impl From<PageIndex> for usize {
 }
 
 #[derive(Clone)]
+#[cfg_attr(feature = "debug-logs", derive(Debug))]
 pub(crate) enum ChunkIndex {
     Any,
     BlobIndex,
@@ -446,17 +447,25 @@ impl ThinPage {
     }
 
     fn get_entry_state(&self, item_index: u8) -> EntryMapState {
-        #[cfg(feature = "defmt")]
-        trace!("get_entry_state: @{:#08x}[{}]", self.address, item_index);
-
-        #[cfg(feature = "debug-logs")]
-        println!("internal: get_item_state");
-
         let idx = item_index / 4;
         let byte = self.entry_state_bitmap[idx as usize];
         let two_bits = (byte >> ((item_index % 4) * 2)) & 0b11;
 
-        EntryMapState::from_repr(two_bits).unwrap()
+        let state = EntryMapState::from_repr(two_bits).unwrap();
+
+        #[cfg(feature = "defmt")]
+        trace!(
+            "get_entry_state: @{:#08x}[{}]: {}",
+            self.address, item_index, state
+        );
+
+        #[cfg(feature = "debug-logs")]
+        println!(
+            "internal: get_item_state @{:#08x}[{item_index}]: {state:?}",
+            self.address,
+        );
+
+        state
     }
 
     fn set_entry_state_range<T: Platform>(
@@ -1340,7 +1349,7 @@ where
         trace!("load_item");
 
         #[cfg(feature = "debug-logs")]
-        println!("internal: load_item");
+        println!("internal: load_item {chunk_index:?}");
 
         let item_chunk_index = match chunk_index {
             ChunkIndex::Any => 0xFF,
@@ -1482,7 +1491,7 @@ where
                 #[cfg(feature = "debug-logs")]
                 println!(
                     "internal: load_sectors: found orphaned blob data. key: '{}', chunk_start: {}",
-                    slice_with_nullbytes_to_str(&key),
+                    slice_with_nullbytes_to_str(&key.0),
                     chunk_start.clone() as u8
                 );
                 self.delete_blob_data(namespace_index.0, &key, chunk_start)?;
@@ -1942,7 +1951,7 @@ where
                         #[cfg(feature = "debug-logs")]
                         println!(
                             "CRC mismatch for item '{}', marking as erased",
-                            slice_with_nullbytes_to_str(&item.key)
+                            slice_with_nullbytes_to_str(&item.key.0)
                         );
                         page.set_entry_state_range(
                             self.hal,

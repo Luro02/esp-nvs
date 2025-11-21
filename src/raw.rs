@@ -338,7 +338,7 @@ impl Debug for Item {
         let span = self.span;
         let chunk_index = self.chunk_index;
         let crc = self.crc;
-        let key = slice_with_nullbytes_to_str(&self.key);
+        let key = slice_with_nullbytes_to_str(&self.key.0);
         let value = match type_ {
             ItemType::Sized | ItemType::BlobData => unsafe { format!("{:?}", self.data.sized) },
             ItemType::Blob | ItemType::BlobIndex => unsafe {
