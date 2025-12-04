@@ -78,6 +78,8 @@ impl AsRef<[u8]> for Key {
 
 extern crate alloc;
 
+use core::marker::PhantomData;
+
 use crate::error::Error;
 use crate::get::Get;
 use crate::internal::{ChunkIndex, ThinPage};
@@ -115,9 +117,9 @@ pub struct EntryStatistics {
 /// the numer of pages in the partition.
 pub struct Nvs<'a, T>
 where
-    T: Platform,
+    T: Platform + 'a,
 {
-    pub(crate) hal: &'a mut T,
+    pub(crate) hal: T,
     pub(crate) base_address: usize,
     pub(crate) sectors: u16,
     pub(crate) faulted: bool,
@@ -126,11 +128,12 @@ where
     pub(crate) namespaces: BTreeMap<Key, u8>,
     pub(crate) free_pages: BinaryHeap<ThinPage>,
     pub(crate) pages: Vec<ThinPage>,
+    _phantom: PhantomData<&'a mut T>,
 }
 
 impl<'a, T> Nvs<'a, T>
 where
-    T: Platform,
+    T: Platform + 'a,
 {
     /// Mimics the original C++ driver behavior and reads all sectors of the given partition to
     /// 1. Resolve all existing namespaces
@@ -142,7 +145,7 @@ where
     pub fn new(
         partition_offset: usize,
         partition_size: usize,
-        hal: &'a mut T,
+        hal: T,
     ) -> Result<Nvs<'a, T>, Error> {
         if !partition_offset.is_multiple_of(FLASH_SECTOR_SIZE) {
             return Err(Error::InvalidPartitionOffset);
@@ -165,6 +168,7 @@ where
             free_pages: Default::default(),
             pages: Default::default(),
             faulted: false,
+            _phantom: PhantomData,
         };
 
         match nvs.load_sectors() {
