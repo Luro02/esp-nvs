@@ -684,7 +684,7 @@ struct Namespace {
     index: u8,
 }
 
-impl<T> Nvs<'_, T>
+impl<T> Nvs<T>
 where
     T: Platform,
 {
