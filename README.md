@@ -38,7 +38,8 @@ esp-storage = { version = "0.8.1", features = ["esp32c6"] }
 let partition_offset = 0x390000;
 let partition_size = 0x32000;
 
-let storage = esp_storage::FlashStorage::new(unsafe { peripherals.FLASH.clone_unchecked() });
+let storage = esp_storage::FlashStorage::new(peripherals.FLASH);
 
-let nvs = esp_nvs::Nvs::new(partition_offset, partition_size, EspFlash::new(storage)).expect("failed to create nvs");
+let nvs = esp_nvs::Nvs::new(partition_offset, partition_size, EspFlash::new(storage))
+   .expect("failed to create nvs");
 ```
